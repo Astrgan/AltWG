@@ -11,8 +11,8 @@
       <entry name="!?*.kt" />
       <entry name="!?*.clj" />
     </wildcardResourcePatterns>
-    <bytecodeTargetLevel target="9">
-      <module name="AltWG" target="9" />
+    <bytecodeTargetLevel target="1.8">
+      <module name="AltWG" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
