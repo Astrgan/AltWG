@@ -9,6 +9,7 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.MouseEvent;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 import java.io.*;
+import java.util.Date;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -70,12 +72,12 @@ public class Controller implements Initializable{
 
     }
 
-    private void connectToDB(String date) {
+    private void connectToDB(String date, String id, String name) {
         System.out.println("Connect...");
         String sql = "SELECT FROM_DT1970(TIME1970), TIME1970, VAL FROM RSDU2ELARH.EL006_6303821 \n" +
                 "WHERE time1970 > TO_DT1970(TO_DATE ('02.04.2018 23:59:59', 'DD.MM.YYYY HH24:MI:SS')) AND time1970 < TO_DT1970(TO_DATE ('04.04.2018 0:00:00', 'DD.MM.YYYY HH24:MI:SS'))\n";
 
-        String sql2 = "SELECT FROM_DT1970(TIME1970), TIME1970, VAL FROM RSDU2ELARH.EL010_6303821 \n" +
+        String sql2 = "SELECT FROM_DT1970(TIME1970), TIME1970, VAL FROM RSDU2ELARH.EL010_" + id + " \n" +
                 "WHERE time1970 > TO_DT1970(TO_DATE (?, 'YYYY-MM-DD HH24:MI:SS')) AND time1970 < TO_DT1970(TO_DATE (?, 'YYYY-MM-DD HH24:MI:SS'))\n";
 
 
@@ -91,7 +93,7 @@ public class Controller implements Initializable{
 ////                System.out.println("Date: " + resultSet.getDate(1) + " " + resultSet.getTime(1) + " VOL: " + resultSet.getDouble("VAL"));
 ////            }
 
-            addChart(resultSet);
+            addChart(resultSet, name);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,7 +109,9 @@ public class Controller implements Initializable{
                 System.out.println("Value parent: " + treeHM.getSelectionModel().getSelectedItem().getParent().getValue());
                 System.out.println("Date:" + calendar.getValue().toString());
 
-                connectToDB(calendar.getValue().toString());
+                String id = mapHeating.get(treeHM.getSelectionModel().getSelectedItem().getParent().getValue()).parameters.get(treeHM.getSelectionModel().getSelectedItem().getValue());
+
+                connectToDB(calendar.getValue().toString(), id, treeHM.getSelectionModel().getSelectedItem().getParent().getValue() + ": " + treeHM.getSelectionModel().getSelectedItem().getValue());
 
             }
 
@@ -133,13 +137,13 @@ public class Controller implements Initializable{
     }
 
 
-    void addChart(ResultSet resultSet) throws SQLException {
+    void addChart(ResultSet resultSet, String name) throws SQLException {
 
-        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
         LineChart lineChart = new LineChart(xAxis, yAxis);
         lineChart.setData(getChartData(resultSet));
-        lineChart.setTitle("Chart");
+        lineChart.setTitle(name);
 
         lineChart.setLegendVisible(false);
         lineChart.setCreateSymbols(false);
@@ -151,44 +155,39 @@ public class Controller implements Initializable{
     }
 
 
-    private ObservableList<XYChart.Series<String, Double>> getChartData(ResultSet resultSet) throws SQLException {
+    private ObservableList<XYChart.Series<Number, Double>> getChartData(ResultSet resultSet) throws SQLException {
 
-        ObservableList<XYChart.Series<String, Double>> answer = FXCollections.observableArrayList();
+        ObservableList<XYChart.Series<Number, Double>> answer = FXCollections.observableArrayList();
 
 
 
-        XYChart.Series<String, Double> aSeries = new XYChart.Series<>();
+        XYChart.Series<Number, Double> aSeries = new XYChart.Series<>();
 
         int count = 0;
 
- /*       for(int i=0; i < 480; i++) {
-
-            Double val;
-            Time time = null;
-
+        for (int i=0; i<479; i++){
+            count++;
             if (resultSet.next()){
-                val = resultSet.getDouble("VAL");
-                time = resultSet.getTime(1);
+                aSeries.getData().add(new XYChart.Data(i*3, resultSet.getDouble("VAL")));
             }else {
-                val = 0.0;
+                aSeries.getData().add(new XYChart.Data(i*3, 0.0));
             }
+        }
 
 
-
-            aSeries.getData().add(new XYChart.Data(time.toString(), val));
-
-        }*/
-
-        while (resultSet.next()) {
+/*        while (resultSet.next()) {
             System.out.println("Date: " + resultSet.getDate(1) + " " + resultSet.getTime(1) + " VOL: " + resultSet.getDouble("VAL"));
             count++;
-            aSeries.getData().add(new XYChart.Data(resultSet.getTime(1).toString(), resultSet.getDouble("VAL")));
-        }
+            aSeries.getData().add(new XYChart.Data(count+3, resultSet.getDouble("VAL")));
+        }*/
 
         System.out.println("Число измерений: " + count);
         answer.addAll(aSeries);
         return answer;
     }
+
+
+
 
     void iniListHM(){
 
