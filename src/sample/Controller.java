@@ -13,6 +13,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.Node;
 
 import java.net.URL;
 import java.sql.*;
@@ -25,6 +26,7 @@ import java.util.Date;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class Controller implements Initializable{
@@ -42,6 +44,7 @@ public class Controller implements Initializable{
 
     Connection connection = null;
     private ResultSet resultSet;
+    private int length = 479;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -74,15 +77,14 @@ public class Controller implements Initializable{
 
     private void connectToDB(String date, String id, String name) {
         System.out.println("Connect...");
-        String sql = "SELECT FROM_DT1970(TIME1970), TIME1970, VAL FROM RSDU2ELARH.EL006_6303821 \n" +
-                "WHERE time1970 > TO_DT1970(TO_DATE ('02.04.2018 23:59:59', 'DD.MM.YYYY HH24:MI:SS')) AND time1970 < TO_DT1970(TO_DATE ('04.04.2018 0:00:00', 'DD.MM.YYYY HH24:MI:SS'))\n";
 
-        String sql2 = "SELECT FROM_DT1970(TIME1970), TIME1970, VAL FROM RSDU2ELARH.EL010_" + id + " \n" +
+
+        String sql = "SELECT FROM_DT1970(TIME1970), TIME1970, VAL FROM RSDU2ELARH.EL010_" + id + " \n" +
                 "WHERE time1970 > TO_DT1970(TO_DATE (?, 'YYYY-MM-DD HH24:MI:SS')) AND time1970 < TO_DT1970(TO_DATE (?, 'YYYY-MM-DD HH24:MI:SS'))\n";
 
 
         try (Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@10.100.35.102:1521:rsdu", "rsdu2elarh", "passme");
-             PreparedStatement statement = connection.prepareStatement(sql2)) {
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
 
             statement.setString(1, date + " 0:00:00");
@@ -139,52 +141,12 @@ public class Controller implements Initializable{
 
     void addChart(ResultSet resultSet, String name) throws SQLException {
 
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
-        LineChart lineChart = new LineChart(xAxis, yAxis);
-        lineChart.setData(getChartData(resultSet));
-        lineChart.setTitle(name);
-
-        lineChart.setLegendVisible(false);
-        lineChart.setCreateSymbols(false);
-        lineChart.getXAxis().setTickLabelsVisible(false);
-        lineChart.getXAxis().setOpacity(0);
-
-
-        vBox.getChildren().add(lineChart);
+        Chart myChart = new Chart();
+        vBox.getChildren().add(myChart.createChart(resultSet, name));
     }
 
 
-    private ObservableList<XYChart.Series<Number, Double>> getChartData(ResultSet resultSet) throws SQLException {
 
-        ObservableList<XYChart.Series<Number, Double>> answer = FXCollections.observableArrayList();
-
-
-
-        XYChart.Series<Number, Double> aSeries = new XYChart.Series<>();
-
-        int count = 0;
-
-        for (int i=0; i<479; i++){
-            count++;
-            if (resultSet.next()){
-                aSeries.getData().add(new XYChart.Data(i*3, resultSet.getDouble("VAL")));
-            }else {
-                aSeries.getData().add(new XYChart.Data(i*3, 0.0));
-            }
-        }
-
-
-/*        while (resultSet.next()) {
-            System.out.println("Date: " + resultSet.getDate(1) + " " + resultSet.getTime(1) + " VOL: " + resultSet.getDouble("VAL"));
-            count++;
-            aSeries.getData().add(new XYChart.Data(count+3, resultSet.getDouble("VAL")));
-        }*/
-
-        System.out.println("Число измерений: " + count);
-        answer.addAll(aSeries);
-        return answer;
-    }
 
 
 
