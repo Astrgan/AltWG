@@ -34,15 +34,12 @@ public class Controller implements Initializable{
     public Map<String, HeatingMainParameters> mapHeating = new LinkedHashMap<>();
     public Map<String, MyChart> mapHeatingChart = new HashMap<>();
 
-    Connection connection = null;
-    private ResultSet resultSet;
+
     private int length = 479;
     private ArrayList<MyChart> listMyChart = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-
 
         calendar.setValue(LocalDate.now());
         System.out.println("Controller");
@@ -64,36 +61,9 @@ public class Controller implements Initializable{
 
         treeHM.setRoot(treeItemRoot);
         treeHM.setShowRoot(false);
-
-
     }
 
-    private void connectToDB(String date, String id, String name) {
-        System.out.println("Connect...");
 
-
-        String sql = "SELECT FROM_DT1970(TIME1970), TIME1970, VAL FROM RSDU2ELARH.EL010_" + id + " \n" +
-                "WHERE time1970 > TO_DT1970(TO_DATE (?, 'YYYY-MM-DD HH24:MI:SS')) AND time1970 < TO_DT1970(TO_DATE (?, 'YYYY-MM-DD HH24:MI:SS'))\n";
-
-
-        try (Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@10.100.35.102:1521:rsdu", "rsdu2elarh", "passme");
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-
-            statement.setString(1, date + " 0:00:00");
-            statement.setString(2, date + " 23:59:59");
-            resultSet = statement.executeQuery();
-
-//            while (resultSet.next()) {
-////                System.out.println("Date: " + resultSet.getDate(1) + " " + resultSet.getTime(1) + " VOL: " + resultSet.getDouble("VAL"));
-////            }
-
-            addChart(resultSet, name, id);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     @FXML
     void treeClicked(MouseEvent event) {
@@ -106,8 +76,8 @@ public class Controller implements Initializable{
 
                 String id = mapHeating.get(treeHM.getSelectionModel().getSelectedItem().getParent().getValue()).parameters.get(treeHM.getSelectionModel().getSelectedItem().getValue());
 
-                connectToDB(calendar.getValue().toString(), id, treeHM.getSelectionModel().getSelectedItem().getParent().getValue() + ": " + treeHM.getSelectionModel().getSelectedItem().getValue() + " " + calendar.getValue().toString());
-
+                addChart(calendar.getValue().toString(), id, treeHM.getSelectionModel().getSelectedItem().getParent().getValue() + ": " + treeHM.getSelectionModel().getSelectedItem().getValue() + " " + calendar.getValue().toString());
+//                addChart(date, name, id);
             }
 
         }
@@ -115,7 +85,6 @@ public class Controller implements Initializable{
     }
 
     void loadSettings(){
-
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader("Settings2.json"))){
 
@@ -125,18 +94,16 @@ public class Controller implements Initializable{
                 mapHeating.putIfAbsent(hmp.name, hmp);
             }
 
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
 
-    void addChart(ResultSet resultSet, String name, String id) throws SQLException {
-
+    void addChart(String date, String id, String name)  {
 
         MyChart myMyChart = new MyChart();
-        vBox.getChildren().add(myMyChart.createChart(resultSet, name, id));
+        vBox.getChildren().add(myMyChart.createChart(name, id, date));
         listMyChart.add(myMyChart);
         mapHeatingChart.put(myMyChart.name, myMyChart);
         System.out.println("Длина списка графиков: " + listMyChart.size());
