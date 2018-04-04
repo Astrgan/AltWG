@@ -1,19 +1,12 @@
 package sample;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.Node;
 
 import java.net.URL;
 import java.sql.*;
@@ -21,12 +14,10 @@ import java.time.LocalDate;
 import java.util.*;
 
 import java.io.*;
-import java.util.Date;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class Controller implements Initializable{
@@ -41,10 +32,12 @@ public class Controller implements Initializable{
     ArrayList<HeatingMainParameters> listHMP;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     public Map<String, HeatingMainParameters> mapHeating = new LinkedHashMap<>();
+    public Map<String, MyChart> mapHeatingChart = new HashMap<>();
 
     Connection connection = null;
     private ResultSet resultSet;
     private int length = 479;
+    private ArrayList<MyChart> listMyChart = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -95,7 +88,7 @@ public class Controller implements Initializable{
 ////                System.out.println("Date: " + resultSet.getDate(1) + " " + resultSet.getTime(1) + " VOL: " + resultSet.getDouble("VAL"));
 ////            }
 
-            addChart(resultSet, name);
+            addChart(resultSet, name, id);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -113,7 +106,7 @@ public class Controller implements Initializable{
 
                 String id = mapHeating.get(treeHM.getSelectionModel().getSelectedItem().getParent().getValue()).parameters.get(treeHM.getSelectionModel().getSelectedItem().getValue());
 
-                connectToDB(calendar.getValue().toString(), id, treeHM.getSelectionModel().getSelectedItem().getParent().getValue() + ": " + treeHM.getSelectionModel().getSelectedItem().getValue());
+                connectToDB(calendar.getValue().toString(), id, treeHM.getSelectionModel().getSelectedItem().getParent().getValue() + ": " + treeHM.getSelectionModel().getSelectedItem().getValue() + " " + calendar.getValue().toString());
 
             }
 
@@ -139,16 +132,29 @@ public class Controller implements Initializable{
     }
 
 
-    void addChart(ResultSet resultSet, String name) throws SQLException {
+    void addChart(ResultSet resultSet, String name, String id) throws SQLException {
 
-        Chart myChart = new Chart();
-        vBox.getChildren().add(myChart.createChart(resultSet, name));
+
+        MyChart myMyChart = new MyChart();
+        vBox.getChildren().add(myMyChart.createChart(resultSet, name, id));
+        listMyChart.add(myMyChart);
+        mapHeatingChart.put(myMyChart.name, myMyChart);
+        System.out.println("Длина списка графиков: " + listMyChart.size());
+        System.out.println("Длина MAP графиков: " + listMyChart.size());
     }
 
 
+    @FXML
+    void cleanAllChart(ActionEvent event) {
 
+        for (MyChart myChart : listMyChart) {
+            vBox.getChildren().remove(myChart.lineChart);
+        }
 
-
+        mapHeatingChart.clear();
+        System.out.println("Длина списка графиков: " + listMyChart.size());
+        System.out.println("Длина MAP графиков: " + mapHeatingChart.size());
+    }
 
 
     void iniListHM(){

@@ -15,16 +15,21 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.util.*;
 
-public class Chart {
+public class MyChart {
 
     private int length = 479;
     public TreeMap<Double, Double> data;
+    public LineChart<Number,Number> lineChart;
+    String name;
+    String id;
 
-    public LineChart createChart(ResultSet resultSet, String name) throws SQLException {
+    public LineChart createChart(ResultSet resultSet, String name, String id) throws SQLException {
 
+        this.id =id;
+        this.name = name;
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
-        LineChart<Number,Number> lineChart = new LineChart<>(xAxis,yAxis);
+        lineChart = new LineChart<>(xAxis,yAxis);
         lineChart.setData(getChartData(resultSet));
         lineChart.setTitle(name);
 //        yAxis.setAutoRanging(false);
